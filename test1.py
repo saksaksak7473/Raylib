@@ -5,9 +5,7 @@ init_window(1440, 900, 'pyray')
 
 class Player:
     def __init__(self, x, y, w, h, color):
-        self.x = x
-        self.y = y
-        self.pos = Vector2(0, 0)
+        self.pos = Vector2(x, y)
         self.dir = Vector2(1, 0)
         self.speed = 100
         self.w = w
@@ -19,6 +17,10 @@ class Player:
         
     def update(self):
         dt = get_frame_time()
+        
+        self.dir.x = int(IsKeyDown(KEY_D)) - int(IsKeyDown(KEY_A))
+        self.dir.y = int(IsKeyDown(KEY_S)) - int(IsKeyDown(KEY_W))
+        
         self.pos.x += self.dir.x * self.speed * dt
         self.pos.y += self.dir.y * self.speed * dt
         
