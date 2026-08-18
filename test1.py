@@ -7,7 +7,7 @@ class Player:
     def __init__(self, x, y, w, h, color):
         self.pos = Vector2(x, y)
         self.dir = Vector2(1, 0)
-        self.speed = 1000
+        self.speed = 500
         self.w = w
         self.h = h
         self.color = color 
@@ -34,16 +34,41 @@ class Wall:
     def draw(self):
         draw_rectangle_v(self.pos, Vector2(self.w, self.h), self.color)
         
+class Collision:
+    def __init__(self, player, walls):
+        self.player = player
+        self.walls = walls
+        
+    def collide(self):
+        player_rec = Rectangle(self.player.pos.x, self.player.pos.y, self.player.w, self.player.h)
+        for wall in self.walls:
+            wall_rec = Rectangle(wall.pos.x, wall.pos.y, wall.w, wall.h)
+            if check_collision_recs(player_rec, wall_rec):
+                if min(self.player.pos.x + self.player.w, wall.pos.x + wall.w) - max(self.player.pos.x, wall.pos.x) < min(self.player.pos.y + self.player.h, wall.pos.y + wall.h,) - max(self.player.pos.y, wall.pos.y): # Hit from left or right
+                    self.player.dir.x = 0
+                    if self.player.pos.x < wall.pos.x: # hit from the left
+                        self.player.pos.x = wall.pos.x - self.player.w
+                    else: # hit from the right
+                        self.player.pos.x = wall.pos.x + wall.w
+                else: # hit from the top or bottom
+                    self.player.dir.y = 0
+                    if self.player.pos.y < wall.pos.y: # hit from the top
+                        self.player.pos.y = wall.pos.y - self.player.h
+                    else: # hit from the bottom
+                        self.player.pos.y = wall.pos.y + wall.h
+        
 player = Player(0, 0, 50, 50, WHITE)
 walls = [
     Wall(100, 100, 50, 200, WHITE),
     Wall(150, 100, 400, 50, WHITE)
 ]
+collision = Collision(player, walls)
     
 while not window_should_close():
     begin_drawing()
     # Update
     player.update()
+    collision.collide()
     
     # Drawing
     clear_background(BLACK)
