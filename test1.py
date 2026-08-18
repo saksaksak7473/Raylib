@@ -3,10 +3,36 @@ from raylib import *
 
 init_window(1440, 900, 'pyray')
 
+class Player:
+    def __init__(self, x, y, w, h, color):
+        self.x = x
+        self.y = y
+        self.pos = Vector2(0, 0)
+        self.dir = Vector2(1, 0)
+        self.speed = 100
+        self.w = w
+        self.h = h
+        self.color = color 
+
+    def draw(self):
+        draw_rectangle_v(self.pos, Vector2(self.w, self.h), self.color)
+        
+    def update(self):
+        dt = get_frame_time()
+        self.pos.x += self.dir.x * self.speed * dt
+        self.pos.y += self.dir.y * self.speed * dt
+        
+player = Player(0, 0, 50, 50, WHITE)
+    
 while not window_should_close():
     begin_drawing()
+    # Update
+    player.update()
     
-    clear_background(SKYBLUE)
+    # Drawing
+    clear_background(BLACK)
+    player.draw()
     
     end_drawing()
+    
 close_window()
