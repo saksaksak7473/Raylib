@@ -17,8 +17,7 @@ class Player:
     def draw(self):
         draw_rectangle_v(self.pos, Vector2(self.w, self.h), self.color)
         
-    def update(self):
-        dt = get_frame_time()
+    def update(self, dt):
         
         self.dir.x = int(IsKeyDown(KEY_D)) - int(IsKeyDown(KEY_A))
         self.dir.y = int(IsKeyDown(KEY_S)) - int(IsKeyDown(KEY_W))
@@ -70,10 +69,10 @@ camera = Camera2D()
 camera.zoom = 1 
 camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
 
-
 while not window_should_close():
     # Update
-    player.update()
+    dt = get_frame_time()
+    player.update(dt)
     collision.collide()
     
     # Camera
