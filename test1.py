@@ -1,8 +1,12 @@
 from pyray import *
-init_window(1280, 720, "Hello")
+from raylib import *
+
+init_window(1440, 900, 'pyray')
+
 while not window_should_close():
     begin_drawing()
-    clear_background(WHITE)
-    draw_text("Hello world", 190, 200, 20, VIOLET)
+    
+    clear_background(SKYBLUE)
+    
     end_drawing()
 close_window()
