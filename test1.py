@@ -1,12 +1,14 @@
 from pyray import *
 from raylib import *
 
-init_window(1440, 900, 'pyray')
+WIDTH, HEIGHT = 1440, 900
+
+init_window(WIDTH, HEIGHT, 'pyray')
 
 class Player:
     def __init__(self, x, y, w, h, color):
         self.pos = Vector2(x, y)
-        self.dir = Vector2(1, 0)
+        self.dir = Vector2(0, 0)
         self.speed = 500
         self.w = w
         self.h = h
@@ -64,18 +66,28 @@ walls = [
 ]
 collision = Collision(player, walls)
     
+camera = Camera2D()
+camera.zoom = 1 
+camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
+
+
 while not window_should_close():
-    begin_drawing()
     # Update
     player.update()
     collision.collide()
     
+    # Camera
+    camera.target = player.pos
+    camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
+
     # Drawing
+    begin_drawing()
     clear_background(BLACK)
+    begin_mode_2d(camera)
     for wall in walls:
         wall.draw()
     player.draw()
-    
+    end_mode_2d()
     end_drawing()
     
 close_window()
