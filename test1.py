@@ -1,5 +1,6 @@
 from pyray import *
 from raylib import *
+import random
 
 WIDTH, HEIGHT = 1440, 900
 
@@ -58,7 +59,7 @@ class Collision:
                     else: # hit from the bottom
                         self.player.pos.y = wall.pos.y + wall.h
         
-player = Player(0, 0, 50, 50, WHITE)
+player = Player(0, 0, 50, 50, random.choice([RED, BLUE, WHITE, PURPLE, ORANGE]))
 walls = [
     Wall(100, 100, 50, 200, WHITE),
     Wall(150, 100, 400, 50, WHITE)
@@ -70,6 +71,8 @@ camera.zoom = 1
 camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
 
 while not window_should_close():
+    SetTargetFPS(30)
+    print(GetFPS())
     # Update
     dt = get_frame_time()
     player.update(dt)
