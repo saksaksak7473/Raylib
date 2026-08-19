@@ -1,6 +1,5 @@
 from pyray import *
 from raylib import *
-import time
 import random
 
 WIDTH, HEIGHT = 1440, 900
