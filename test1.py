@@ -129,12 +129,7 @@ class Bullet:
         if self.isShoot:
             self.pos.x += self.vel.x * dt
             self.pos.y += self.vel.y * dt
-
-            # Optional: stop bullet when it goes far off-screen (simple lifetime)
-            if (abs(self.pos.x - camera.target.x) > WIDTH * 2) or (abs(self.pos.y - camera.target.y) > HEIGHT * 2):
-                self.isShoot = False
-                self.vel = Vector2(0, 0)
-
+            
 player = Player(0, 0, 50, 50, WHITE)
 bullet = Bullet(player.pos.x + player.w / 2, player.pos.y + player.h / 2, 5.0, WHITE)
 walls = [
