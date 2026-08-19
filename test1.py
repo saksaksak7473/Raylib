@@ -1,5 +1,6 @@
 from pyray import *
 from raylib import *
+import math
 import random
 
 WIDTH, HEIGHT = 1440, 900
@@ -7,19 +8,17 @@ WIDTH, HEIGHT = 1440, 900
 init_window(WIDTH, HEIGHT, 'pyray')
 
 class Player:
-    def __init__(self, x, y, w, h, color = WHITE):
+    def __init__(self, x, y, w, h, color):
         self.pos = Vector2(x, y)
         self.dir = Vector2(0, 0)
         self.speed = 500
         self.w = w
         self.h = h
         self.color = color
-        
-    def RandColor(self):
-        self.color = random.choice([WHITE, PURPLE, BLUE, RED, PINK, ORANGE, GREEN])
+        self.angle = 0.0
 
     def draw(self):
-        draw_rectangle_v(self.pos, Vector2(self.w, self.h), self.color)
+        DrawRectangleV(self.pos, Vector2(self.w, self.h), self.color)
         
     def update(self, dt):
         
@@ -37,7 +36,7 @@ class Wall:
         self.color = color
     
     def draw(self):
-        draw_rectangle_v(self.pos, Vector2(self.w, self.h), self.color)
+        DrawRectangleV(self.pos, Vector2(self.w, self.h), self.color)
         
 class Collision:
     def __init__(self, player, walls):
@@ -61,8 +60,6 @@ class Collision:
                         self.player.pos.y = wall.pos.y - self.player.h
                     else: # hit from the bottom
                         self.player.pos.y = wall.pos.y + wall.h
-                        
-                rand_color.update()
         
 class Timer:
     def __init__(self, duration: int, autostart = False, repeat = False, function = None):
@@ -91,8 +88,55 @@ class Timer:
             if GetTime() - self.start >= self.duration:
                 self.function()
                 self.deactivate()
+                
+class Bullet:
+    def __init__(self, x, y, r, color):
+        self.pos = Vector2(x, y)
+        self.r = r
+        self.color = color
+        self.speed = 1000
+        self.vel = Vector2(0, 0)
+        self.isShoot = False
+    
+    def draw(self):
+        DrawCircleV(self.pos, self.r, self.color)
 
-player = Player(0, 0, 50, 50)
+    def update(self, dt):
+        # Convert mouse to world coordinates so shooting aims where the cursor is in the world
+        mouse_screen = GetMousePosition()
+        mouse_world = GetScreenToWorld2D(mouse_screen, camera)
+
+        # On mouse press, spawn/reset bullet at player's center and compute a fixed velocity
+        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT):
+            # place bullet at player's center (adjust if player.pos represents top-left or center)
+            self.pos.x = player.pos.x + player.w * 0.5
+            self.pos.y = player.pos.y + player.h * 0.5
+
+            dx = mouse_world.x - self.pos.x
+            dy = mouse_world.y - self.pos.y
+            dist = math.hypot(dx, dy)
+            if dist != 0:
+                nx = dx / dist
+                ny = dy / dist
+            else:
+                nx, ny = 1.0, 0.0
+
+            self.vel.x = nx * self.speed
+            self.vel.y = ny * self.speed
+            self.isShoot = True
+
+        # Move along the fixed velocity — direction NOT recomputed each frame
+        if self.isShoot:
+            self.pos.x += self.vel.x * dt
+            self.pos.y += self.vel.y * dt
+
+            # Optional: stop bullet when it goes far off-screen (simple lifetime)
+            if (abs(self.pos.x - camera.target.x) > WIDTH * 2) or (abs(self.pos.y - camera.target.y) > HEIGHT * 2):
+                self.isShoot = False
+                self.vel = Vector2(0, 0)
+
+player = Player(0, 0, 50, 50, WHITE)
+bullet = Bullet(player.pos.x + player.w / 2, player.pos.y + player.h / 2, 5.0, WHITE)
 walls = [
     Wall(100, 100, 50, 200, WHITE),
     Wall(150, 100, 400, 50, WHITE)
@@ -101,9 +145,9 @@ collision = Collision(player, walls)
 
 camera = Camera2D()
 camera.zoom = 1 
-camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
+camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
 
-rand_color = Timer(0.3, True, True, player.RandColor)
+timer = Timer(1, True, True, bullet.draw())
 
 SetTargetFPS(45)
 
@@ -112,15 +156,17 @@ while not window_should_close():
     dt = get_frame_time()
     player.update(dt)
     collision.update()
+    bullet.update(dt)
     
     # Camera
     camera.target = player.pos
-    camera.offset = Vector2(WIDTH / 2 - player.w, HEIGHT / 2 - player.h)
+    camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
 
     # Drawing
     begin_drawing()
     clear_background(BLACK)
     begin_mode_2d(camera)
+    bullet.draw()
     for wall in walls:
         wall.draw()
     player.draw()
