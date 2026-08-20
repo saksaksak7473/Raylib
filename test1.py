@@ -40,9 +40,10 @@ class Wall:
         DrawRectangleV(self.pos, Vector2(self.w, self.h), self.color)
         
 class Collision:
-    def __init__(self, player, walls):
+    def __init__(self, player, walls, bullets):
         self.player = player
         self.walls = walls
+        self.bullets = bullets
     
     def update(self):
         player_rec = Rectangle(self.player.pos.x, self.player.pos.y, self.player.w, self.player.h)
@@ -61,6 +62,11 @@ class Collision:
                         self.player.pos.y = wall.pos.y - self.player.h
                     else: # hit from the bottom
                         self.player.pos.y = wall.pos.y + wall.h
+                        
+            for bullet in self.bullets:
+                bullet_rec = Rectangle(bullet.pos.x - bullet.r, bullet.pos.y - bullet.r, bullet.r * 2, bullet.r * 2)
+                if check_collision_recs(bullet_rec, wall_rec):
+                    self.bullets.remove(bullet)
         
 class Timer:
     def __init__(self, duration: int, autostart = False, repeat = False):
@@ -89,61 +95,27 @@ class Timer:
                 self.deactivate()
                 
 class Bullet:
-    def __init__(self, x, y, r, color):
-        
-        
-        self.shoot_timer = Timer(0.5) # in Second
-        
-        self.pos = Vector2(x, y)
-        self.r = r
-        self.color = color
-        self.speed = 1000
-        self.vel = Vector2(0, 0)
-        self.isShoot = False
+    def __init__(self, pos, velocity):
+        self.pos = pos
+        self.r = 5
+        self.color = WHITE
+        self.vel = velocity
     
     def draw(self):
         DrawCircleV(self.pos, self.r, self.color)
 
     def update(self, dt):
-        mouse_screen = GetMousePosition()
-        mouse_world = GetScreenToWorld2D(mouse_screen, camera)
-        
-        if not self.isShoot:
-            self.pos.x = player.pos.x + player.w * 0.5
-            self.pos.y = player.pos.y + player.h * 0.5
-            
-        self.shoot_timer.update()
-        
-        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) and not self.shoot_timer.active:
-            self.shoot_timer.activate()
-            
-            self.pos.x = player.pos.x + player.w * 0.5
-            self.pos.y = player.pos.y + player.h * 0.5
-
-            dx = mouse_world.x - self.pos.x
-            dy = mouse_world.y - self.pos.y
-            dist = math.hypot(dx, dy)
-            if dist != 0:
-                nx = dx / dist
-                ny = dy / dist
-            else:
-                nx, ny = 1.0, 0.0
-
-            self.vel.x = nx * self.speed
-            self.vel.y = ny * self.speed
-            self.isShoot = True
-
-        if self.isShoot:
-            self.pos.x += self.vel.x * dt
-            self.pos.y += self.vel.y * dt
+        self.pos.x += self.vel.x * dt
+        self.pos.y += self.vel.y * dt
             
 player = Player(0, 0, 50, 50, WHITE)
-bullet = Bullet(player.pos.x + player.w / 2, player.pos.y + player.h / 2, 5.0, WHITE)
+bullets = []
+shoot_timer = Timer(0.25)
 walls = [
     Wall(100, 100, 50, 200, WHITE),
     Wall(150, 100, 400, 50, WHITE)
 ]
-collision = Collision(player, walls)
+collision = Collision(player, walls, bullets)
 
 camera = Camera2D()
 camera.zoom = 1 
@@ -156,17 +128,46 @@ while not window_should_close():
     dt = get_frame_time()
     player.update(dt)
     collision.update()
-    bullet.update(dt)
+    shoot_timer.update()
+
+    if IsMouseButtonDown(MOUSE_BUTTON_LEFT) and not shoot_timer.active:
+        shoot_timer.activate()
+
+        mouse_world = GetScreenToWorld2D(GetMousePosition(), camera)
+        bullet_pos = Vector2(player.pos.x + player.w * 0.5, player.pos.y + player.h * 0.5)
+        dx = mouse_world.x - bullet_pos.x
+        dy = mouse_world.y - bullet_pos.y
+        distance = math.hypot(dx, dy)
+
+        if distance != 0:
+            bullet_velocity = Vector2(dx / distance * 1000, dy / distance * 1000)
+            bullets.append(Bullet(bullet_pos, bullet_velocity))
+
+    for bullet in bullets:
+        bullet.update(dt)
     
     # Camera
-    camera.target = player.pos
     camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
+    player_center = Vector2(player.pos.x + player.w / 2, player.pos.y + player.h / 2)
+    current_target = player_center
+
+    if IsMouseButtonDown(MOUSE_BUTTON_RIGHT):
+        mouse = GetScreenToWorld2D(GetMousePosition(), camera)
+        current_target = Vector2(
+            (player_center.x + mouse.x) / 2,
+            (player_center.y + mouse.y) / 2
+        )
+
+    smooth = min(1.0, 7.5 * dt)
+    camera.target.x += (current_target.x - camera.target.x) * smooth
+    camera.target.y += (current_target.y - camera.target.y) * smooth
 
     # Drawing
     begin_drawing()
     clear_background(BLACK)
     begin_mode_2d(camera)
-    bullet.draw()
+    for bullet in bullets:
+        bullet.draw()
     for wall in walls:
         wall.draw()
     player.draw()
