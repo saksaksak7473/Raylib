@@ -63,11 +63,10 @@ class Collision:
                         self.player.pos.y = wall.pos.y + wall.h
         
 class Timer:
-    def __init__(self, duration: int, autostart = False, repeat = False, function = None):
+    def __init__(self, duration: int, autostart = False, repeat = False):
         self.duration = duration
         self.active = False
         self.repeat = repeat
-        self.function = function
         self.start = 0
         
         if autostart:
@@ -86,34 +85,38 @@ class Timer:
         
     def update(self):
         if self.active:
-            if GetTime() - self.start >= self.duration:
-                self.function()
+            if self.active and GetTime() - self.start >= self.duration:
                 self.deactivate()
                 
 class Bullet:
     def __init__(self, x, y, r, color):
+        
+        
+        self.shoot_timer = Timer(0.5) # in Second
+        
         self.pos = Vector2(x, y)
         self.r = r
         self.color = color
         self.speed = 1000
         self.vel = Vector2(0, 0)
         self.isShoot = False
-        self.shootRate = 0
     
     def draw(self):
         DrawCircleV(self.pos, self.r, self.color)
 
     def update(self, dt):
-        self.shootRate += 1
         mouse_screen = GetMousePosition()
         mouse_world = GetScreenToWorld2D(mouse_screen, camera)
         
         if not self.isShoot:
             self.pos.x = player.pos.x + player.w * 0.5
             self.pos.y = player.pos.y + player.h * 0.5
+            
+        self.shoot_timer.update()
         
-        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) and self.shootRate >= 25:
-            self.shootRate = 0
+        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) and not self.shoot_timer.active:
+            self.shoot_timer.activate()
+            
             self.pos.x = player.pos.x + player.w * 0.5
             self.pos.y = player.pos.y + player.h * 0.5
 
