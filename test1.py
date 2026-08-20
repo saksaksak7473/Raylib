@@ -1,9 +1,8 @@
 from pyray import *
 from raylib import *
 import math
-import random
 
-WIDTH, HEIGHT = 1440, 900
+WIDTH, HEIGHT = 2560, 1600
 
 init_window(WIDTH, HEIGHT, 'pyray')
 
@@ -97,7 +96,7 @@ class Timer:
 class Bullet:
     def __init__(self, pos, velocity):
         self.pos = pos
-        self.r = 5
+        self.r = 10
         self.color = WHITE
         self.vel = velocity
     
@@ -108,12 +107,12 @@ class Bullet:
         self.pos.x += self.vel.x * dt
         self.pos.y += self.vel.y * dt
             
-player = Player(0, 0, 50, 50, WHITE)
+player = Player(0, 0, 100, 100, WHITE)
 bullets = []
 shoot_timer = Timer(0.25)
 walls = [
-    Wall(100, 100, 50, 200, WHITE),
-    Wall(150, 100, 400, 50, WHITE)
+    Wall(100, 100, 100,400, WHITE),
+    Wall(200, 100, 1000, 100, WHITE)
 ]
 collision = Collision(player, walls, bullets)
 
@@ -121,11 +120,15 @@ camera = Camera2D()
 camera.zoom = 1 
 camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
 
-SetTargetFPS(45)
+set_target_fps(45)
 
 while not window_should_close():
     # Update
     dt = get_frame_time()
+
+    if IsKeyPressed(KEY_F11):
+        toggle_fullscreen()
+
     player.update(dt)
     collision.update()
     shoot_timer.update()
@@ -147,7 +150,7 @@ while not window_should_close():
         bullet.update(dt)
     
     # Camera
-    camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
+    camera.offset = Vector2(get_screen_width() / 2, get_screen_height() / 2)
     player_center = Vector2(player.pos.x + player.w / 2, player.pos.y + player.h / 2)
     current_target = player_center
 
@@ -158,7 +161,7 @@ while not window_should_close():
             (player_center.y + mouse.y) / 2
         )
 
-    smooth = min(1.0, 7.5 * dt)
+    smooth = min(1.0, 5.0 * dt)
     camera.target.x += (current_target.x - camera.target.x) * smooth
     camera.target.y += (current_target.y - camera.target.y) * smooth
 
@@ -172,6 +175,13 @@ while not window_should_close():
         wall.draw()
     player.draw()
     end_mode_2d()
+    draw_text(
+        f"FPS: {get_fps()}",
+        20,
+        20,
+        50,
+        GREEN
+    )
     end_drawing()
     
 close_window()
