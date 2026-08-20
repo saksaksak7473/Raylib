@@ -11,7 +11,7 @@ class Player:
     def __init__(self, x, y, w, h, color):
         self.pos = Vector2(x, y)
         self.dir = Vector2(0, 0)
-        self.speed = 500
+        self.speed = 250
         self.w = w
         self.h = h
         self.color = color
@@ -21,12 +21,13 @@ class Player:
         DrawRectangleV(self.pos, Vector2(self.w, self.h), self.color)
         
     def update(self, dt):
-        
+        boost = 1
         self.dir.x = int(IsKeyDown(KEY_D)) - int(IsKeyDown(KEY_A))
         self.dir.y = int(IsKeyDown(KEY_S)) - int(IsKeyDown(KEY_W))
+        if IsKeyDown(KEY_LEFT_SHIFT): boost = 2
         
-        self.pos.x += self.dir.x * self.speed * dt
-        self.pos.y += self.dir.y * self.speed * dt
+        self.pos.x += self.dir.x * self.speed * boost * dt
+        self.pos.y += self.dir.y * self.speed * boost * dt
         
 class Wall:
     def __init__(self, x, y, w, h, color):
@@ -97,18 +98,22 @@ class Bullet:
         self.speed = 1000
         self.vel = Vector2(0, 0)
         self.isShoot = False
+        self.shootRate = 0
     
     def draw(self):
         DrawCircleV(self.pos, self.r, self.color)
 
     def update(self, dt):
-        # Convert mouse to world coordinates so shooting aims where the cursor is in the world
+        self.shootRate += 1
         mouse_screen = GetMousePosition()
         mouse_world = GetScreenToWorld2D(mouse_screen, camera)
-
-        # On mouse press, spawn/reset bullet at player's center and compute a fixed velocity
-        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT):
-            # place bullet at player's center (adjust if player.pos represents top-left or center)
+        
+        if not self.isShoot:
+            self.pos.x = player.pos.x + player.w * 0.5
+            self.pos.y = player.pos.y + player.h * 0.5
+        
+        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) and self.shootRate >= 25:
+            self.shootRate = 0
             self.pos.x = player.pos.x + player.w * 0.5
             self.pos.y = player.pos.y + player.h * 0.5
 
@@ -125,7 +130,6 @@ class Bullet:
             self.vel.y = ny * self.speed
             self.isShoot = True
 
-        # Move along the fixed velocity — direction NOT recomputed each frame
         if self.isShoot:
             self.pos.x += self.vel.x * dt
             self.pos.y += self.vel.y * dt
@@ -141,8 +145,6 @@ collision = Collision(player, walls)
 camera = Camera2D()
 camera.zoom = 1 
 camera.offset = Vector2(WIDTH / 2, HEIGHT / 2)
-
-timer = Timer(1, True, True, bullet.draw())
 
 SetTargetFPS(45)
 

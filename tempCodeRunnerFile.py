@@ -1,1 +1,0 @@
-mouse_screen = Vector2(0, 0)
